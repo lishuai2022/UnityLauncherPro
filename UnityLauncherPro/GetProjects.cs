@@ -320,10 +320,23 @@ namespace UnityLauncherPro
             p.Arguments = customArgs;
             p.GITBranch = gitBranch;
             //Console.WriteLine("targetPlatform " + targetPlatform + " projectPath:" + projectPath);
-            p.TargetPlatform = targetPlatform;
+            // if platform column is enabled but Library doesn't exist, show platform as empty
+            if (showTargetPlatform && folderExists && !Tools.HasLibraryBuildSettings(projectPath))
+                p.TargetPlatform = "";
+            else
+                p.TargetPlatform = string.IsNullOrEmpty(targetPlatform) ? "Current platform" : targetPlatform;
 
             // bubblegum(TM) solution, fill available platforms for this unity version, for this project
-            p.TargetPlatforms = Tools.GetPlatformsForUnityVersion(projectVersion);
+            var rawPlatforms = Tools.GetPlatformsForUnityVersion(projectVersion);
+            // prepend default option so user can deselect platform (no -buildTarget passed)
+            var platformList = new List<string>();
+            platformList.Add("Current platform");
+            if (rawPlatforms != null) platformList.AddRange(rawPlatforms);
+            // when TargetPlatform is empty (Library doesn't exist),
+            // prepend empty placeholder so ComboBox can show blank
+            if (string.IsNullOrEmpty(p.TargetPlatform))
+                platformList.Insert(0, "");
+            p.TargetPlatforms = platformList.ToArray();
             p.folderExists = folderExists;
 
             if (showSRP == true) p.SRP = Tools.GetSRP(projectPath);

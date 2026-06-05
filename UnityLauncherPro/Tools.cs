@@ -311,7 +311,7 @@ namespace UnityLauncherPro
                 }
 
                 string projTargetPlatform = proj.TargetPlatform;
-                if (string.IsNullOrEmpty(projTargetPlatform) == false)
+                if (string.IsNullOrEmpty(projTargetPlatform) == false && projTargetPlatform != "Current platform")
                 {
                     unitycommandlineparameters += " -buildTarget " + projTargetPlatform;
                 }
@@ -1574,6 +1574,18 @@ namespace UnityLauncherPro
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// Check if project has Library folder and EditorUserBuildSettings.asset,
+        /// which indicates the project has been opened in Unity at least once.
+        /// </summary>
+        public static bool HasLibraryBuildSettings(string projectPath)
+        {
+            if (string.IsNullOrEmpty(projectPath)) return false;
+            string libraryPath = Path.Combine(projectPath, "Library");
+            string buildSettingsPath = Path.Combine(libraryPath, "EditorUserBuildSettings.asset");
+            return Directory.Exists(libraryPath) && File.Exists(buildSettingsPath);
         }
 
         static string GetTargetPlatformRaw(string projectPath)

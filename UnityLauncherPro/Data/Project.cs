@@ -14,7 +14,7 @@ namespace UnityLauncherPro
         public string Arguments { set; get; }
         public string GITBranch { set; get; } // TODO rename to Branch
         //public string TargetPlatform { set; get; }
-        public string TargetPlatform { set; get; } // TODO rename to Platform
+        public string TargetPlatform { set; get; } = "Current platform"; // default when no platform is set
         public string[] TargetPlatforms { set; get; }
         public bool folderExists { set; get; }
         public string SRP { set; get; } // Scriptable Render Pipeline, TODO add version info?

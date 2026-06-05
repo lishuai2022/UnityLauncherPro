@@ -1074,7 +1074,24 @@ namespace UnityLauncherPro
             p.Title = Path.GetFileName(folder);
             p.Version = Tools.GetProjectVersion(folder);
             p.Arguments = Tools.ReadCustomProjectData(folder, launcherArgumentsFile);
-            if ((bool)chkShowPlatform.IsChecked == true) p.TargetPlatform = Tools.GetTargetPlatform(folder);
+            if ((bool)chkShowPlatform.IsChecked == true)
+            {
+                if (Tools.HasLibraryBuildSettings(folder))
+                    p.TargetPlatform = Tools.GetTargetPlatform(folder) ?? "Current platform";
+                else
+                    p.TargetPlatform = ""; // Library doesn't exist, show platform as empty
+
+                // fill available platforms for this project's Unity version
+                var rawPlatforms = Tools.GetPlatformsForUnityVersion(p.Version);
+                var platformList = new List<string>();
+                platformList.Add("Current platform");
+                if (rawPlatforms != null) platformList.AddRange(rawPlatforms);
+                // when TargetPlatform is empty (Library doesn't exist),
+                // prepend empty placeholder so ComboBox can show blank
+                if (string.IsNullOrEmpty(p.TargetPlatform))
+                    platformList.Insert(0, "");
+                p.TargetPlatforms = platformList.ToArray();
+            }
             if ((bool)chkShowGitBranchColumn.IsChecked == true) p.GITBranch = Tools.ReadGitBranchInfo(folder, (bool)chkGetGitBranchRecursively.IsChecked);
             return p;
         }
@@ -2900,6 +2917,38 @@ namespace UnityLauncherPro
             chkEnablePlatformSelection.IsChecked = isChecked;
         }
 
+        private void CmbPlatformSelection_Loaded(object sender, RoutedEventArgs e)
+        {
+            // IsSynchronizedWithCurrentItem auto-selects the first item.
+            // Only need to override when TargetPlatform is a specific non-default platform.
+            if (sender == null) return;
+            try
+            {
+                var cmb = (ComboBox)sender;
+                var proj = cmb.DataContext as Project;
+                if (proj == null) return;
+
+                if (string.IsNullOrEmpty(proj.TargetPlatform) || proj.TargetPlatform == "Current platform")
+                    return;
+
+                cmb.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    foreach (var item in cmb.Items)
+                    {
+                        if (item != null && item.ToString() == proj.TargetPlatform)
+                        {
+                            cmb.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }), System.Windows.Threading.DispatcherPriority.Loaded);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+
         private void CmbPlatformSelection_DropDownClosed(object sender, EventArgs e)
         {
             if (sender == null) return;
@@ -2909,7 +2958,7 @@ namespace UnityLauncherPro
                 var cmb = (ComboBox)sender;
                 //Console.WriteLine(cmb.SelectedValue);
                 var p = GetSelectedProject();
-                if (p != null && p.TargetPlatform != null) p.TargetPlatform = cmb.SelectedValue.ToString();
+                if (p != null && cmb.SelectedValue != null) p.TargetPlatform = cmb.SelectedValue.ToString();
             }
             catch (Exception ex)
             {
